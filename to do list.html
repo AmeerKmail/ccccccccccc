@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>To do list</title>
+
+    <style>
+        body{
+            box-sizing: border-box;
+            font-family:'Courier New', Courier, monospace;
+            background-color:rgb(241, 207, 207);
+        }
+        main#main{
+           width: 60%;
+           margin: auto;
+           text-align: center;
+           background-color: snow;
+           margin-top:20px;
+           border-radius: 60px;
+
+        }
+        #save:hover{
+            color: black;
+        }
+        input{
+            display: block;
+            margin:10px auto;
+            width:40%;
+            border:2px peachpuff  solid;
+            border-radius: 50px;
+            padding: 15px;
+            color: slategray;
+            font-size: 18px;
+            outline: none;
+            }
+          
+            #input_s, #output_s{
+                    background-color:peachpuff;
+                    padding-bottom: 30px;
+                    padding-top: 5px;
+                    margin:0 80px;
+                    border-radius:150px;
+                    border:3px lemonchiffon solid;
+                    border-top: none;
+                     overflow: auto; 
+            }
+            h1{
+                text-decoration: underline;
+                color: tomato;
+                font-family:monospace;
+                font-size: 250%;
+                padding-top: 0px;
+                margin-top: 0px;
+            }
+            #l_task, #task{
+                display: inline-block;
+                font-size: 20px;
+                }
+             #my_tasks{
+                 text-align: left;
+                 padding:5px 100px;  
+                 font-size: 25px;
+                 overflow-wrap:break-word;     
+             }
+             #my_tasks :hover{
+                color:seagreen;
+             }
+
+             .del_btn{
+                background-color: inherit;
+                border:none;
+                float: right;
+            }
+            .tem_del{
+                text-decoration: line-through;
+                color:white;
+            }
+           
+    </style>
+
+</head>
+<body>
+    <main id="main">
+        <div id="input_s">
+            <h1>To do list</h1>
+            <form action="">
+                <label for="task" id="l_task">Write a task</label>
+                <input type="text" id="task" name="task" placeholder=" Ex: Go to the center"/>
+                <input type="button" id="save" name="save" value="Add a task " />
+            </form>
+        </div>
+        <div id="output_s">
+                <h1>My tasks</h1>
+                <div id="my_tasks">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        var data_b,save_btn;
+        window.onload = function(){
+           
+            save_btn = document.getElementById("save");
+            save_btn.addEventListener("click",create_tasks);
+            
+            var req = indexedDB.open("TDlist");
+
+            req.onerror = function(event){
+                alert("Allow your web browser to use indexed db!<br/>for another information about the error<br/> "+event.target.errorCode);
+            };
+            req.onsuccess = function(event){
+                data_b = event.target.result;
+                show_tasks();
+            };
+            req.onupgradeneeded = function(event){
+                data_b = event.target.result;
+               var c_ostroe = data_b.createObjectStore("mytasks",{keyPath : "id",autoIncrement  : true});
+           };
+           
+        };
+        function create_tasks(){
+           var task = document.getElementById("task").value;  
+           if(task == ""){
+               alert("The task field shouldnt be empty !");
+           }  else{
+                var trans_action = data_b.transaction(["mytasks"],"readwrite");
+                var o_store = trans_action.objectStore("mytasks");
+                var req = o_store.add({task : task});
+
+                req.onerror = function(){
+                    alert("error");
+                };
+                req.onsuccess = function(){
+                    save_btn.style.backgroundColor = "green";
+                    save_btn.style.color = "black";
+                    setTimeout(return_color,1000);
+                    document.getElementById("task").value = ""; 
+                    show_tasks();
+                };
+           }
+         }
+        function return_color(){
+                        save_btn.style.backgroundColor = "";
+                        save_btn.style.color = "slategray";
+                    }
+
+         function show_tasks(){
+
+            var my_tasks_div =document.getElementById("my_tasks") ;
+            my_tasks_div.innerHTML = "";
+            var trans_action =data_b.transaction(["mytasks"],"readonly");
+            var o_store = trans_action.objectStore("mytasks");
+            var req = o_store.openCursor().onsuccess = function(event){
+                var cursor = event.target.result;
+                if(cursor){
+                    my_tasks_div.innerHTML += "<div class='class_item'>"+"<apan class='xcc'> &#127812</span>"+cursor.value.task+"<button type='button' class='del_btn' onclick='del_task("+cursor.value.id+");'>  &#10060 </button>"+"</div>";
+                  cursor.continue();
+                };
+
+                var class_item =  document.getElementsByClassName("class_item");
+                for(var i = 0 ;i<class_item.length;i++){
+                 class_item[i].addEventListener("click",l_throught);
+                }
+            }    
+           
+         }
+         function del_task(id){
+            var trans_action = data_b.transaction(["mytasks"],"readwrite");
+            var o_store = trans_action.objectStore("mytasks").delete(id);
+            o_store.onsuccess = function(){
+                show_tasks();
+            };
+         }
+         function l_throught(){
+           this.classList.toggle("tem_del");   
+           var x = document.getElementsByClassName("xcc")[0];
+         }
+
+    </script>
+</body>
+</html>
